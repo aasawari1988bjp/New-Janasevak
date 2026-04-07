@@ -286,10 +286,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Get user details
+    // 2. Get user details and check complaint count
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('full_name, phone, epic_number')
+      .select('full_name, phone, epic_number, voter_verified, complaint_count')
       .eq('id', user_id)
       .single();
 
@@ -297,6 +297,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
+      );
+    }
+
+    // Check if user needs EPIC verification (5+ complaints without verification)
+    const currentCount = user.complaint_count || 0;
+    if (currentCount >= 5 && !user.voter_verified) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'EPIC_VERIFICATION_REQUIRED',
+          message: 'You have reached your complaint limit. Please verify your EPIC number to continue submitting complaints.',
+          needsEpicVerification: true,
+          complaintCount: currentCount
+        },
+        { status: 403 }
       );
     }
 
@@ -343,7 +358,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. Add initial update with AI analysis
+    // 6. Increment user's complaint count
+    await supabase
+      .from('users')
+      .update({ complaint_count: currentCount + 1 })
+      .eq('id', user_id);
+
+    // 7. Add initial update with AI analysis
     await supabase.from('complaint_updates').insert({
       complaint_id: complaint.id,
       updated_by_role: 'system',
@@ -352,7 +373,7 @@ export async function POST(request: NextRequest) {
       is_public: true
     });
 
-    // 7. Send multi-channel notifications
+    // 8. Send multi-channel notifications
     const complaintWithDetails = {
       ...complaint,
       citizen_name: user.full_name,
@@ -366,6 +387,10 @@ export async function POST(request: NextRequest) {
         .catch(err => console.error('Notification error:', err));
     }
 
+    // Check if user is approaching limit
+    const newCount = currentCount + 1;
+    const needsVerificationSoon = newCount >= 4 && !user.voter_verified;
+
     return NextResponse.json({
       success: true,
       message: 'Complaint submitted successfully!',
@@ -375,7 +400,12 @@ export async function POST(request: NextRequest) {
         priority: aiAnalysis.priority,
         confidence: aiAnalysis.confidence,
         suggestedResponse: aiAnalysis.suggestedResponse
-      }
+      },
+      complaintCount: newCount,
+      needsVerificationSoon,
+      verificationMessage: needsVerificationSoon 
+        ? `You have submitted ${newCount} complaints. Please verify your EPIC number after ${5 - newCount} more complaint(s) to continue.`
+        : null
     });
   } catch (error) {
     console.error('Complaint creation error:', error);

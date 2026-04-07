@@ -284,19 +284,18 @@ export default function RegisterPage() {
 
                       <div>
                         <label className="block text-white/70 text-sm mb-2">
-                          EPIC Number (Voter ID) *
-                          <span className="text-[#FF6B00] ml-1 text-xs">(Required for verification)</span>
+                          EPIC Number (Voter ID)
+                          <span className="text-white/40 ml-1 text-xs">(Optional - can add later)</span>
                         </label>
                         <input
                           type="text"
-                          required
                           value={formData.epic_number}
                           onChange={(e) => setFormData({ ...formData, epic_number: e.target.value.toUpperCase() })}
                           className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-[#FF6B00]/50 transition-colors uppercase"
-                          placeholder="e.g. ABC1234567"
+                          placeholder="e.g. ABC1234567 (optional)"
                           maxLength={10}
                         />
-                        <p className="text-white/40 text-xs mt-1">Found on your Voter ID card (3 letters + 7 digits)</p>
+                        <p className="text-green-400 text-xs mt-1">✓ EPIC verification required after 5 complaints</p>
                       </div>
                     </div>
 

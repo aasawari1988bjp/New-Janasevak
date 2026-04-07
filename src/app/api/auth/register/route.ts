@@ -15,11 +15,12 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password || !full_name || !phone || !address || !latitude || !longitude) {
       return NextResponse.json(
-        { success: false, error: "All fields are required" },
+        { success: false, error: "All required fields must be filled" },
         { status: 400 }
       );
     }
 
+    // Geofencing check
     if (!isInWard26(latitude, longitude)) {
       return NextResponse.json(
         {
@@ -31,22 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const voterVerification = await verifyVoter(full_name, epic_number || voter_id);
-
-    if (!voterVerification.verified) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: voterVerification.message || "Voter verification failed. Your name or EPIC number was not found in the Ward 26 voter list. Please ensure your details match your voter ID card.",
-          voterVerification: {
-            verified: false,
-            confidence: voterVerification.confidence,
-          },
-        },
-        { status: 403 }
-      );
-    }
-
+    // Check if email already exists
     const { data: existingUser } = await supabase
       .from("users")
       .select("id")
@@ -60,18 +46,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (voterVerification.matchedVoter?.epic_number) {
+    // Optional EPIC verification (if provided during signup)
+    let voterVerified = false;
+    let matchedEpicNumber = null;
+    
+    if (epic_number) {
+      // Check if EPIC already used
       const { data: existingEpic } = await supabase
         .from("users")
         .select("id")
-        .eq("epic_number", voterVerification.matchedVoter.epic_number)
+        .eq("epic_number", epic_number)
         .single();
 
       if (existingEpic) {
         return NextResponse.json(
-          { success: false, error: "This voter ID (EPIC) is already registered with another account." },
+          { success: false, error: "This EPIC number is already registered with another account." },
           { status: 400 }
         );
+      }
+
+      // Verify against voter list
+      const voterVerification = await verifyVoter(full_name, epic_number);
+      if (voterVerification.verified) {
+        voterVerified = true;
+        matchedEpicNumber = voterVerification.matchedVoter?.epic_number || epic_number;
       }
     }
 
@@ -86,13 +84,14 @@ export async function POST(request: NextRequest) {
         phone,
         address,
         voter_id: voter_id || null,
-        epic_number: voterVerification.matchedVoter?.epic_number || epic_number || null,
+        epic_number: matchedEpicNumber || epic_number || null,
         latitude,
         longitude,
         is_verified: true,
-        voter_verified: true,
+        voter_verified: voterVerified,
+        complaint_count: 0, // Initialize complaint counter
       })
-      .select("id, email, full_name, phone, address, voter_id, epic_number, is_verified, voter_verified")
+      .select("id, email, full_name, phone, address, epic_number, is_verified, voter_verified, complaint_count")
       .single();
 
     if (error) {
@@ -105,14 +104,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Registration successful! Your voter ID has been verified. Welcome to Ward 26 Citizen Connect.",
+      message: voterVerified 
+        ? "Registration successful! Your EPIC number has been verified. Welcome to Ward 26 Citizen Connect."
+        : "Registration successful! You can submit up to 5 complaints. EPIC verification required after 5 complaints.",
       user: newUser,
-      voterVerification: {
-        verified: true,
-        matchType: voterVerification.matchType,
-        confidence: voterVerification.confidence,
-        matchedName: voterVerification.matchedVoter?.voter_name,
-      },
+      needsEpicVerification: !voterVerified,
     });
   } catch (error) {
     console.error("Registration error:", error);
