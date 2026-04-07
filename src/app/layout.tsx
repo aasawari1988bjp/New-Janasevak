@@ -5,10 +5,33 @@ import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "sonner";
+import PWAInstaller from "@/components/PWAInstaller";
 
 export const metadata: Metadata = {
-  title: "जनसेवक | Jansevak - Mrs. Aasawari Kedar Navare | BJP Corporator Ward 26 KDMC",
-  description: "जनसेवक - वॉर्ड 26 नागरिक पोर्टल | Official app of BJP Corporator Mrs. Aasawari Kedar Navare - Ward 26 KDMC. Lodge complaints, connect with your representative.",
+  title: "Jansevak ward 26 | Mrs. Aasawari Kedar Navare | BJP Corporator KDMC",
+  description: "Jansevak ward 26 - Official app of BJP Corporator Mrs. Aasawari Kedar Navare - Ward 26 KDMC. Lodge complaints, connect with your representative, and stay updated with civic issues.",
+
+export function generateViewport() {
+  return {
+    themeColor: "#FF9933",
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+  };
+}
+
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Jansevak ward 26",
+  },
+  openGraph: {
+    title: "Jansevak ward 26 | Mrs. Aasawari Kedar Navare",
+    description: "Official civic app for Ward 26 KDMC - Lodge complaints and stay connected",
+    type: "website",
+    locale: "en_IN",
+  },
 };
 
 export default function RootLayout({
@@ -39,6 +62,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <PWAInstaller />
         <Toaster richColors position="top-center" />
         <VisualEditsMessenger />
       </body>
