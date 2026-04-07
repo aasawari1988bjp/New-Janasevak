@@ -21,11 +21,6 @@ function parseVoterListText(text: string): VoterEntry[] {
   const lines = text.split("\n").map((l) => l.trim()).filter((l) => l);
 
   const epicPattern = /[A-Z]{3}[0-9]{7}/g;
-  const namePattern = /(?:Name|नाम)\s*:?\s*([A-Za-z\s]+)/gi;
-  const fatherPattern = /(?:Father|Husband|पिता|पति)\s*:?\s*([A-Za-z\s]+)/gi;
-  const housePattern = /(?:House\s*No|घर\s*नं)\s*:?\s*([A-Za-z0-9\-\/\s]+)/gi;
-  const agePattern = /(?:Age|उम्र)\s*:?\s*(\d{1,3})/gi;
-  const genderPattern = /(?:Male|Female|पुरुष|महिला)/gi;
 
   let currentEntry: Partial<VoterEntry> = {};
   let entryText = "";
@@ -75,6 +70,7 @@ function parseVoterListText(text: string): VoterEntry[] {
     voters.push(currentEntry as VoterEntry);
   }
 
+  // Enhanced table pattern matching for common voter list formats
   const tablePattern = /(\d+)\s+([A-Z]{3}\d{7})\s+([A-Za-z\s]+?)(?:\s+(?:M|F|Male|Female))?\s+(\d{2,3})/g;
   let tableMatch;
   while ((tableMatch = tablePattern.exec(text)) !== null) {
@@ -90,6 +86,47 @@ function parseVoterListText(text: string): VoterEntry[] {
   }
 
   return voters;
+}
+
+// Batch insert function for better performance
+async function batchInsertVoters(voters: VoterEntry[], batchSize: number = 500) {
+  let insertedCount = 0;
+  let skippedCount = 0;
+  const errors: string[] = [];
+
+  for (let i = 0; i < voters.length; i += batchSize) {
+    const batch = voters.slice(i, i + batchSize);
+    
+    try {
+      const { data, error } = await supabase
+        .from("voter_list")
+        .upsert(batch.map(voter => ({
+          sr_no: voter.sr_no,
+          epic_number: voter.epic_number,
+          voter_name: voter.voter_name,
+          father_husband_name: voter.father_husband_name,
+          house_no: voter.house_no,
+          age: voter.age,
+          gender: voter.gender,
+        })), { onConflict: "epic_number" });
+
+      if (error) {
+        skippedCount += batch.length;
+        if (errors.length < 10) {
+          errors.push(`Batch ${i / batchSize + 1}: ${error.message}`);
+        }
+      } else {
+        insertedCount += batch.length;
+      }
+    } catch (err) {
+      skippedCount += batch.length;
+      if (errors.length < 10) {
+        errors.push(`Batch ${i / batchSize + 1}: ${err}`);
+      }
+    }
+  }
+
+  return { insertedCount, skippedCount, errors };
 }
 
 export async function POST(request: NextRequest) {
@@ -120,8 +157,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log("Starting PDF parsing...");
     const pdfData = await pdf(pdfBuffer);
     const extractedText = pdfData.text;
+
+    console.log(`PDF parsed. Pages: ${pdfData.numpages}, Text length: ${extractedText.length}`);
 
     const voters = parseVoterListText(extractedText);
 
@@ -133,36 +173,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    let insertedCount = 0;
-    let skippedCount = 0;
-    const errors: string[] = [];
+    console.log(`Extracted ${voters.length} voters. Starting batch insert...`);
 
-    for (const voter of voters) {
-      try {
-        const { error } = await supabase
-          .from("voter_list")
-          .upsert({
-            sr_no: voter.sr_no,
-            epic_number: voter.epic_number,
-            voter_name: voter.voter_name,
-            father_husband_name: voter.father_husband_name,
-            house_no: voter.house_no,
-            age: voter.age,
-            gender: voter.gender,
-          }, { onConflict: "epic_number" });
-
-        if (error) {
-          skippedCount++;
-          if (errors.length < 5) {
-            errors.push(`${voter.epic_number}: ${error.message}`);
-          }
-        } else {
-          insertedCount++;
-        }
-      } catch (err) {
-        skippedCount++;
-      }
-    }
+    // Use batch insert for better performance
+    const { insertedCount, skippedCount, errors } = await batchInsertVoters(voters, 500);
 
     return NextResponse.json({
       success: true,
@@ -179,7 +193,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("PDF processing error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to process voter list PDF" },
+      { success: false, error: `Failed to process voter list PDF: ${error}` },
       { status: 500 }
     );
   }

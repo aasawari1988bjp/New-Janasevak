@@ -66,6 +66,12 @@ export default function HomePage() {
               >
                 <span className="hidden sm:inline">माहिती | </span>About
               </Link>
+              <Link
+                href="/admin"
+                className="px-5 py-2 text-white hover:text-[#FF6B00] transition-colors font-medium"
+              >
+                <span className="hidden sm:inline">प्रशासक | </span>Admin
+              </Link>
               {user ? (
                 <Link
                   href="/dashboard"
