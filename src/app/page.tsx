@@ -61,6 +61,12 @@ export default function HomePage() {
 
             <div className="flex items-center gap-3">
               <Link
+                href="/janasevak"
+                className="px-5 py-2 text-white hover:text-[#FF6B00] transition-colors font-medium"
+              >
+                <span className="hidden sm:inline">जनसेवक | </span>Janasevak
+              </Link>
+              <Link
                 href="/about"
                 className="px-5 py-2 text-white hover:text-[#FF6B00] transition-colors font-medium"
               >
