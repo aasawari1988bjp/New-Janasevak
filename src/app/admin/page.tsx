@@ -160,6 +160,21 @@ export default function AdminDashboard() {
             </div>
           </Link>
           
+          <Link
+            href="/admin/analytics"
+            className="glass-morphism rounded-2xl p-6 hover:border-purple-500/50 transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-semibold">Analytics & Reports</p>
+                <p className="text-white/60 text-sm">Performance insights</p>
+              </div>
+            </div>
+          </Link>
+          
           <div className="glass-morphism rounded-2xl p-6 opacity-50">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
@@ -167,18 +182,6 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-white font-semibold">Staff Portal</p>
-                <p className="text-white/60 text-sm">Coming soon...</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="glass-morphism rounded-2xl p-6 opacity-50">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-white font-semibold">Analytics</p>
                 <p className="text-white/60 text-sm">Coming soon...</p>
               </div>
             </div>
