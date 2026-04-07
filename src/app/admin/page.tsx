@@ -15,7 +15,9 @@ import {
   XCircle,
   ArrowLeft,
   BarChart3,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  Settings
 } from "lucide-react";
 import { BJPLogo } from "@/components/BJPLogo";
 
@@ -128,7 +130,57 @@ export default function AdminDashboard() {
             <BJPLogo size="lg" />
             <div>
               <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-              <p className="text-white/60">Ward 26 Voter List Management</p>
+              <p className="text-white/60">Ward 26 Management</p>
+            </div>
+          </div>
+          
+          <Link
+            href="/admin/departments"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#FF6B00] to-[#D4AF37] text-white rounded-full font-semibold hover:shadow-lg transition-all"
+          >
+            <Building2 className="w-5 h-5" />
+            Manage Departments
+          </Link>
+        </div>
+        
+        {/* Quick Links */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <Link
+            href="/admin/departments"
+            className="glass-morphism rounded-2xl p-6 hover:border-[#FF6B00]/50 transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B00] to-[#D4AF37] flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Building2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-semibold">Departments</p>
+                <p className="text-white/60 text-sm">Manage officer contacts</p>
+              </div>
+            </div>
+          </Link>
+          
+          <div className="glass-morphism rounded-2xl p-6 opacity-50">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-semibold">Staff Portal</p>
+                <p className="text-white/60 text-sm">Coming soon...</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="glass-morphism rounded-2xl p-6 opacity-50">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-semibold">Analytics</p>
+                <p className="text-white/60 text-sm">Coming soon...</p>
+              </div>
             </div>
           </div>
         </div>
